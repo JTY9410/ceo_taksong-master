@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">관리자</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">대시보드</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">관리자 페이지</h1>
+        <hr>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <button type="button" class="btn btn-danger w-100 py-3" data-bs-toggle="modal" data-bs-target="#dbResetModal">데이터베이스 초기화</button>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="/admin/users" class="btn btn-primary w-100 py-3">사용자 관리</a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="/admin/customers" class="btn btn-success w-100 py-3">고객사 관리</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Reset Modal -->
+    <div class="modal fade" id="dbResetModal" tabindex="-1" aria-labelledby="dbResetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dbResetModalLabel">데이터베이스 초기화</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>어떤 방식으로 데이터베이스를 초기화하시겠습니까?</p>
+                    <form id="monthlyResetForm" action="/admin/reset_db" method="POST" style="display: none;">
+                        <input type="hidden" name="reset_type" value="monthly">
+                        <input type="hidden" id="monthlyResetYear" name="year">
+                        <input type="hidden" id="monthlyResetMonth" name="month">
+                    </form>
+                    <form id="allResetForm" action="/admin/reset_db" method="POST" style="display: none;">
+                        <input type="hidden" name="reset_type" value="all">
+                    </form>
+                    <div class="mb-3">
+                        <label for="resetYear" class="form-label">년도</label>
+                        <input type="number" class="form-control" id="resetYear" value="{{ now.year }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="resetMonth" class="form-label">월</label>
+                        <input type="number" class="form-control" id="resetMonth" value="{{ now.month }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmReset('monthly')">월별 데이터 초기화</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmReset('all')">전체 데이터 초기화</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmReset(type) {
+            if (type === 'monthly') {
+                const year = document.getElementById('resetYear').value;
+                const month = document.getElementById('resetMonth').value;
+                if (confirm(`정말로 ${year}년 ${month}월 데이터를 초기화하시겠습니까?`)) {
+                    document.getElementById('monthlyResetYear').value = year;
+                    document.getElementById('monthlyResetMonth').value = month;
+                    document.getElementById('monthlyResetForm').submit();
+                }
+            } else if (type === 'all') {
+                if (confirm('정말로 모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다!')) {
+                    document.getElementById('allResetForm').submit();
+                }
+            }
+        }
+        // Get current year and month for modal default values
+        const now = new Date();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('resetYear').value = now.getFullYear();
+            document.getElementById('resetMonth').value = now.getMonth() + 1;
+        });
+    </script>
+</body>
+</html>

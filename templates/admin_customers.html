@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고객사 관리</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">고객사 관리</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">이전 페이지</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">고객사 관리</h1>
+        <hr>
+        <div class="mb-3">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">추가</button>
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">엑셀파일 업로드</button>
+            <button type="button" class="btn btn-danger" onclick="confirmCustomerDbReset()">데이터베이스 초기화</button>
+        </div>
+        <table class="table table-bordered" id="customerTable">
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>계정아이디</th>
+                    <th>상호</th>
+                    <th>연락처</th>
+                    <th>생성일</th>
+                    <th>상태</th>
+                    <th>사업자등록번호</th>
+                    <th>대표자</th>
+                    <th>담당자 이름</th>
+                    <th>담당자 연락처</th>
+                    <th>담당자 이메일</th>
+                    <th>고객사 메모</th>
+                    <th>거래처 유형</th>
+                    <th>본사 메모</th>
+                    <th>기본 계산서발행여부</th>
+                    <th>기본 결제주기</th>
+                    <th>주유비/기타비용</th>
+                    <th>책임보험 세금계산서 포함</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr data-id="{{ customer.id }}">
+                    <td data-field="category">{{ customer.category }}</td>
+                    <td data-field="account_id">{{ customer.account_id }}</td>
+                    <td data-field="company_name">{{ customer.company_name }}</td>
+                    <td data-field="contact_number">{{ customer.contact_number }}</td>
+                    <td data-field="created_at">{{ customer.created_at }}</td>
+                    <td data-field="status">{{ customer.status }}</td>
+                    <td data-field="business_registration_number">{{ customer.business_registration_number }}</td>
+                    <td data-field="representative_name">{{ customer.representative_name }}</td>
+                    <td data-field="manager_name">{{ customer.manager_name }}</td>
+                    <td data-field="manager_contact">{{ customer.manager_contact }}</td>
+                    <td data-field="manager_email">{{ customer.manager_email }}</td>
+                    <td data-field="customer_memo">{{ customer.customer_memo }}</td>
+                    <td data-field="transaction_type">{{ customer.transaction_type }}</td>
+                    <td data-field="head_office_memo">{{ customer.head_office_memo }}</td>
+                    <td data-field="invoice_issue_type">{{ customer.invoice_issue_type }}</td>
+                    <td data-field="payment_cycle">{{ customer.payment_cycle }}</td>
+                    <td data-field="fuel_misc_cost">{{ customer.fuel_misc_cost }}</td>
+                    <td data-field="liability_insurance_tax_invoice">{{ customer.liability_insurance_tax_invoice }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning edit-btn">수정</button>
+                        <button type="button" class="btn btn-sm btn-success save-btn" style="display:none;">저장</button>
+                        <button type="button" class="btn btn-sm btn-danger delete-btn">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCustomerModalLabel">고객사 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/admin/customers/add" method="POST">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="addCategory" class="form-label">구분</label>
+                                <select class="form-select" id="addCategory" name="category">
+                                    <option value="">선택</option>
+                                    <option value="비용">비용</option>
+                                    <option value="매출">매출</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addAccountId" class="form-label">계정아이디</label>
+                                <input type="text" class="form-control" id="addAccountId" name="account_id" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addCompanyName" class="form-label">상호</label>
+                                <input type="text" class="form-control" id="addCompanyName" name="company_name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addContactNumber" class="form-label">연락처</label>
+                                <input type="text" class="form-control" id="addContactNumber" name="contact_number">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addCreatedAt" class="form-label">생성일</label>
+                                <input type="date" class="form-control" id="addCreatedAt" name="created_at">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addStatus" class="form-label">상태</label>
+                                <select class="form-select" id="addStatus" name="status">
+                                    <option value="">선택</option>
+                                    <option value="ok">ok</option>
+                                    <option value="no">no</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addBusinessRegistrationNumber" class="form-label">사업자등록번호</label>
+                                <input type="text" class="form-control" id="addBusinessRegistrationNumber" name="business_registration_number">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addRepresentativeName" class="form-label">대표자</label>
+                                <input type="text" class="form-control" id="addRepresentativeName" name="representative_name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addManagerName" class="form-label">담당자 이름</label>
+                                <input type="text" class="form-control" id="addManagerName" name="manager_name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addManagerContact" class="form-label">담당자 연락처</label>
+                                <input type="text" class="form-control" id="addManagerContact" name="manager_contact">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addManagerEmail" class="form-label">담당자 이메일</label>
+                                <input type="email" class="form-control" id="addManagerEmail" name="manager_email">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addCustomerMemo" class="form-label">고객사 메모</label>
+                                <textarea class="form-control" id="addCustomerMemo" name="customer_memo"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addTransactionType" class="form-label">거래처 유형</label>
+                                <input type="text" class="form-control" id="addTransactionType" name="transaction_type">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addHeadOfficeMemo" class="form-label">본사 메모</label>
+                                <textarea class="form-control" id="addHeadOfficeMemo" name="head_office_memo"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addInvoiceIssueType" class="form-label">기본 계산서발행여부</label>
+                                <select class="form-select" id="addInvoiceIssueType" name="invoice_issue_type">
+                                    <option value="">선택</option>
+                                    <option value="현금(현지지불)">현금(현지지불)</option>
+                                    <option value="세금계산서발행">세금계산서발행</option>
+                                    <option value="미지정">미지정</option>
+                                    <option value="선지급">선지급</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="addInvoiceIssueTypeOther" name="invoice_issue_type_other" style="display:none;" placeholder="기타 입력">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addPaymentCycle" class="form-label">기본 결제주기</label>
+                                <select class="form-select" id="addPaymentCycle" name="payment_cycle">
+                                    <option value="">선택</option>
+                                    <option value="건별">건별</option>
+                                    <option value="주별">주별</option>
+                                    <option value="월별">월별</option>
+                                    <option value="미지정">미지정</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="addPaymentCycleOther" name="payment_cycle_other" style="display:none;" placeholder="기타 입력">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addFuelMiscCost" class="form-label">주유비/기타비용</label>
+                                <select class="form-select" id="addFuelMiscCost" name="fuel_misc_cost">
+                                    <option value="">선택</option>
+                                    <option value="예">예</option>
+                                    <option value="아니오">아니오</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addLiabilityInsuranceTaxInvoice" class="form-label">책임보험 세금계산서 포함</label>
+                                <select class="form-select" id="addLiabilityInsuranceTaxInvoice" name="liability_insurance_tax_invoice">
+                                    <option value="">선택</option>
+                                    <option value="예">예</option>
+                                    <option value="아니오">아니오</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Excel Modal -->
+    <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadExcelModalLabel">엑셀 파일 업로드</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/admin/customers/upload_excel" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">엑셀 파일 선택</label>
+                            <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">업로드</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <form id="customerResetForm" action="/admin/customers/reset" method="POST" style="display:none;"></form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerTable = document.getElementById('customerTable');
+
+            // Handle "기타" option for invoice_issue_type and payment_cycle
+            function setupOtherInput(selectId, otherInputId) {
+                const selectElement = document.getElementById(selectId);
+                const otherInputElement = document.getElementById(otherInputId);
+                if (selectElement && otherInputElement) {
+                    selectElement.addEventListener('change', function() {
+                        if (this.value === '기타') {
+                            otherInputElement.style.display = 'block';
+                            otherInputElement.setAttribute('required', 'required');
+                        } else {
+                            otherInputElement.style.display = 'none';
+                            otherInputElement.removeAttribute('required');
+                            otherInputElement.value = '';
+                        }
+                    });
+                    // Initial check in case the value is already '기타' on load
+                    if (selectElement.value === '기타') {
+                        otherInputElement.style.display = 'block';
+                        otherInputElement.setAttribute('required', 'required');
+                    }
+                }
+            }
+
+            setupOtherInput('addInvoiceIssueType', 'addInvoiceIssueTypeOther');
+            setupOtherInput('addPaymentCycle', 'addPaymentCycleOther');
+
+            customerTable.addEventListener('click', function(event) {
+                const target = event.target;
+
+                // Edit button click
+                if (target.classList.contains('edit-btn')) {
+                    const row = target.closest('tr');
+                    row.classList.add('editing');
+                    target.style.display = 'none';
+                    row.querySelector('.save-btn').style.display = 'inline-block';
+
+                    const fields = [
+                        'category', 'account_id', 'company_name', 'contact_number', 'created_at',
+                        'status', 'business_registration_number', 'representative_name', 'manager_name',
+                        'manager_contact', 'manager_email', 'customer_memo', 'transaction_type',
+                        'head_office_memo', 'invoice_issue_type', 'payment_cycle', 'fuel_misc_cost',
+                        'liability_insurance_tax_invoice'
+                    ];
+
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell) {
+                            let input;
+                            const currentValue = cell.textContent.trim();
+
+                            if (field === 'category') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    <option value="비용">비용</option>
+                                    <option value="매출">매출</option>
+                                `;
+                                input.value = currentValue;
+                            } else if (field === 'status') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    <option value="ok">ok</option>
+                                    <option value="no">no</option>
+                                `;
+                                input.value = currentValue;
+                            } else if (field === 'invoice_issue_type') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    <option value="현금(현지지불)">현금(현지지불)</option>
+                                    <option value="세금계산서발행">세금계산서발행</option>
+                                    <option value="미지정">미지정</option>
+                                    <option value="선지급">선지급</option>
+                                    <option value="기타">기타</option>
+                                `;
+                                input.value = currentValue;
+                                // Handle "기타" option for editing
+                                const otherInput = document.createElement('input');
+                                otherInput.type = 'text';
+                                otherInput.classList.add('form-control', 'form-control-sm', 'mt-1');
+                                otherInput.placeholder = '기타 입력';
+                                otherInput.name = field + '_other';
+                                if (input.value === '기타') {
+                                    otherInput.style.display = 'block';
+                                    otherInput.value = currentValue; // Assuming current value is the "other" value
+                                } else {
+                                    otherInput.style.display = 'none';
+                                }
+                                input.addEventListener('change', function() {
+                                    if (this.value === '기타') {
+                                        otherInput.style.display = 'block';
+                                    } else {
+                                        otherInput.style.display = 'none';
+                                        otherInput.value = '';
+                                    }
+                                });
+                                cell.innerHTML = '';
+                                cell.appendChild(input);
+                                cell.appendChild(otherInput);
+                                return; // Skip default appendChild
+                            } else if (field === 'payment_cycle') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    <option value="건별">건별</option>
+                                    <option value="주별">주별</option>
+                                    <option value="월별">월별</option>
+                                    <option value="미지정">미지정</option>
+                                    <option value="기타">기타</option>
+                                `;
+                                input.value = currentValue;
+                                // Handle "기타" option for editing
+                                const otherInput = document.createElement('input');
+                                otherInput.type = 'text';
+                                otherInput.classList.add('form-control', 'form-control-sm', 'mt-1');
+                                otherInput.placeholder = '기타 입력';
+                                otherInput.name = field + '_other';
+                                if (input.value === '기타') {
+                                    otherInput.style.display = 'block';
+                                    otherInput.value = currentValue; // Assuming current value is the "other" value
+                                } else {
+                                    otherInput.style.display = 'none';
+                                }
+                                input.addEventListener('change', function() {
+                                    if (this.value === '기타') {
+                                        otherInput.style.display = 'block';
+                                    } else {
+                                        otherInput.style.display = 'none';
+                                        otherInput.value = '';
+                                    }
+                                });
+                                cell.innerHTML = '';
+                                cell.appendChild(input);
+                                cell.appendChild(otherInput);
+                                return; // Skip default appendChild
+                            } else if (field === 'fuel_misc_cost' || field === 'liability_insurance_tax_invoice') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    <option value="예">예</option>
+                                    <option value="아니오">아니오</option>
+                                `;
+                                input.value = currentValue;
+                            } else if (field === 'created_at') {
+                                input = document.createElement('input');
+                                input.type = 'date';
+                                input.value = currentValue;
+                                input.classList.add('form-control', 'form-control-sm');
+                            } else if (field === 'customer_memo' || field === 'head_office_memo') {
+                                input = document.createElement('textarea');
+                                input.value = currentValue;
+                                input.classList.add('form-control', 'form-control-sm');
+                            } else {
+                                input = document.createElement('input');
+                                input.type = 'text';
+                                input.value = currentValue;
+                                input.classList.add('form-control', 'form-control-sm');
+                            }
+                            input.name = field;
+                            cell.innerHTML = '';
+                            cell.appendChild(input);
+                        }
+                    });
+                }
+
+                // Save button click
+                if (target.classList.contains('save-btn')) {
+                    const row = target.closest('tr');
+                    const customerId = row.dataset.id;
+                    const formData = new FormData();
+                    formData.append('id', customerId);
+
+                    const fields = [
+                        'category', 'account_id', 'company_name', 'contact_number', 'created_at',
+                        'status', 'business_registration_number', 'representative_name', 'manager_name',
+                        'manager_contact', 'manager_email', 'customer_memo', 'transaction_type',
+                        'head_office_memo', 'invoice_issue_type', 'payment_cycle', 'fuel_misc_cost',
+                        'liability_insurance_tax_invoice'
+                    ];
+
+                    let isValid = true;
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell) {
+                            let value = '';
+                            if (field === 'invoice_issue_type' || field === 'payment_cycle') {
+                                const select = cell.querySelector('select');
+                                const otherInput = cell.querySelector('input[name="' + field + '_other"]');
+                                if (select.value === '기타' && otherInput) {
+                                    value = otherInput.value;
+                                } else {
+                                    value = select.value;
+                                }
+                            } else if (cell.querySelector('input, select, textarea')) {
+                                value = cell.querySelector('input, select, textarea').value;
+                            } else {
+                                value = cell.textContent.trim();
+                            }
+                            formData.append(field, value);
+                        }
+                    });
+
+                    if (!isValid) return;
+
+                    fetch('/admin/customers/edit', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload(); // Reload to reflect changes and exit edit mode
+                        } else {
+                            alert('저장 실패: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('오류 발생: ' + error);
+                    });
+                }
+
+                // Delete button click
+                if (target.classList.contains('delete-btn')) {
+                    const row = target.closest('tr');
+                    const customerId = row.dataset.id;
+                    if (confirm('정말로 이 고객사를 삭제하시겠습니까?')) {
+                        const formData = new FormData();
+                        formData.append('id', customerId);
+
+                        fetch('/admin/customers/delete', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                row.remove(); // Remove row from table
+                            } else {
+                                alert('삭제 실패: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('오류 발생: ' + error);
+                        });
+                    }
+                }
+            });
+
+            // Function to confirm and submit customer database reset
+            window.confirmCustomerDbReset = function() {
+                if (confirm('정말로 고객사 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다!')) {
+                    document.getElementById('customerResetForm').submit();
+                }
+            };
+
+            // Handle "기타" option for add customer modal
+            const addInvoiceIssueType = document.getElementById('addInvoiceIssueType');
+            const addInvoiceIssueTypeOther = document.getElementById('addInvoiceIssueTypeOther');
+            addInvoiceIssueType.addEventListener('change', function() {
+                if (this.value === '기타') {
+                    addInvoiceIssueTypeOther.style.display = 'block';
+                } else {
+                    addInvoiceIssueTypeOther.style.display = 'none';
+                    addInvoiceIssueTypeOther.value = '';
+                }
+            });
+
+            const addPaymentCycle = document.getElementById('addPaymentCycle');
+            const addPaymentCycleOther = document.getElementById('addPaymentCycleOther');
+            addPaymentCycle.addEventListener('change', function() {
+                if (this.value === '기타') {
+                    addPaymentCycleOther.style.display = 'block';
+                } else {
+                    addPaymentCycleOther.style.display = 'none';
+                    addPaymentCycleOther.value = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

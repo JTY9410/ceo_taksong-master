@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매출 월별 분석</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">매출 월별 분석</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">메인1 페이지</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">매출 월별 분석</h1>
+        <hr>
+        <div class="row mb-3 align-items-end">
+            <div class="col-md-2">
+                <label for="analysisYear" class="form-label">년도</label>
+                <input type="number" class="form-control" id="analysisYear" value="{{ now.year }}">
+            </div>
+            <div class="col-md-2">
+                <label for="analysisMonth" class="form-label">월</label>
+                <input type="number" class="form-control" id="analysisMonth" value="{{ now.month }}">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100" id="analyzeButton">분석</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#otherSalesModal">기타매출입력</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-success w-100" id="saveReportButton">보고서 저장</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-info w-100" id="editReportButton">수정</button>
+            </div>
+        </div>
+
+        <div id="analysisResults" style="display:none;">
+            <h2 class="mt-5">{{ analysis_year }}년 {{ analysis_month }}월 분석보고서</h2>
+
+            <h3 class="mt-4">1. 매출 분석</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>구분</th>
+                        <th>세부구분</th>
+                        <th>건수</th>
+                        <th>매출</th>
+                        <th>비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sales_analysis %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.subcategory }}</td>
+                        <td>{{ row.count }}</td>
+                        <td>{{ row.amount }}</td>
+                        <td>{{ row.note }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3 class="mt-4">2. 비용 분석</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>구분</th>
+                        <th>세부구분</th>
+                        <th>건수</th>
+                        <th>비용</th>
+                        <th>비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in cost_analysis %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.subcategory }}</td>
+                        <td>{{ row.count }}</td>
+                        <td>{{ row.amount }}</td>
+                        <td>{{ row.note }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3 class="mt-4">3. 종합</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>유형구분</th>
+                        <th>세부구분</th>
+                        <th>건수</th>
+                        <th>금액</th>
+                        <th>비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in comprehensive_analysis %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.subcategory }}</td>
+                        <td>{{ row.count }}</td>
+                        <td>{{ row.amount }}</td>
+                        <td>{{ row.note }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 기타매출입력 Modal -->
+    <div class="modal fade" id="otherSalesModal" tabindex="-1" aria-labelledby="otherSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="otherSalesModalLabel">기타매출입력</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/sales/other_sales/add" method="POST">
+                    <div class="modal-body">
+                        <p>{{ now.year }}년 {{ now.month }}월 기타매출 입력</p>
+                        <div class="mb-3">
+                            <label for="otherSalesCategory" class="form-label">구분</label>
+                            <input type="text" class="form-control" id="otherSalesCategory" name="category" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherSalesCount" class="form-label">건수</label>
+                            <input type="number" class="form-control" id="otherSalesCount" name="count" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherSalesAmount" class="form-label">금액</label>
+                            <input type="number" class="form-control" id="otherSalesAmount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otherSalesDetails" class="form-label">세부내용</label>
+                            <textarea class="form-control" id="otherSalesDetails" name="details"></textarea>
+                        </div>
+                        <input type="hidden" name="year" value="{{ now.year }}">
+                        <input type="hidden" name="month" value="{{ now.month }}">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보고서 저장 Modal -->
+    <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveReportModalLabel">보고서 저장</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>보고서를 어떤 형식으로 저장하시겠습니까?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" id="saveExcelReport">엑셀로 저장</button>
+                    <button type="button" class="btn btn-danger" id="savePdfReport">PDF로 저장</button>
+                    <button type="button" class="btn btn-success" id="saveDbReport">데이터 저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const now = new Date();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('analysisYear').value = now.getFullYear();
+            document.getElementById('analysisMonth').value = now.getMonth() + 1;
+
+            // Analyze button click
+            document.getElementById('analyzeButton').addEventListener('click', function() {
+                const year = document.getElementById('analysisYear').value;
+                const month = document.getElementById('analysisMonth').value;
+                window.location.href = `/sales/monthly_analysis?year=${year}&month=${month}`;
+            });
+
+            // Save Report button click
+            document.getElementById('saveReportButton').addEventListener('click', function() {
+                const saveReportModal = new bootstrap.Modal(document.getElementById('saveReportModal'));
+                saveReportModal.show();
+            });
+
+            // Placeholder for save report actions
+            document.getElementById('saveExcelReport').addEventListener('click', function() {
+                alert('엑셀 보고서 저장 기능은 아직 구현되지 않았습니다.');
+            });
+            document.getElementById('savePdfReport').addEventListener('click', function() {
+                alert('PDF 보고서 저장 기능은 아직 구현되지 않았습니다.');
+            });
+            document.getElementById('saveDbReport').addEventListener('click', function() {
+                alert('데이터베이스 보고서 저장 기능은 아직 구현되지 않았습니다.');
+            });
+
+            // Edit Report button click
+            document.getElementById('editReportButton').addEventListener('click', function() {
+                alert('보고서 수정 기능은 아직 구현되지 않았습니다.');
+            });
+        });
+    </script>
+</body>
+</html>

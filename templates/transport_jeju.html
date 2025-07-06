@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제주 탁송</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">제주 탁송</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/transport">이전 페이지</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">제주 탁송 관리</h1>
+        <hr>
+        <div class="mb-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label for="searchYear" class="form-label">년도</label>
+                    <input type="number" class="form-control" id="searchYear" value="{{ search_year }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="searchMonth" class="form-label">월</label>
+                    <input type="number" class="form-control" id="searchMonth" value="{{ search_month }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="searchDriver" class="form-label">기사명</label>
+                    <select class="form-select" id="searchDriver">
+                        <option value="">전체 기사</option>
+                        {% for driver in drivers %}
+                        <option value="{{ driver.name }}" {% if search_driver_name == driver.name %}selected{% endif %}>{{ driver.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-primary w-100" id="searchButton">검색</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-success w-100" id="saveDataButton">저장</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-info w-100" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">엑셀파일 업로드</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#addJejuTransportModal">추가</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#addDriverModal">기사 데이터 입력</button>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-bordered mt-4" id="jejuTransportTable">
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>날짜</th>
+                    <th>발주업체</th>
+                    <th>출금일</th>
+                    <th>출금은행</th>
+                    <th>차량번호</th>
+                    <th>기사명</th>
+                    <th>기사 주민등록번호</th>
+                    <th>기사 전화번호</th>
+                    <th>기사 은행</th>
+                    <th>기사 계좌번호</th>
+                    <th>탁송료</th>
+                    <th>원천징수</th>
+                    <th>입금금액</th>
+                    <th>비고</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transport in jeju_transports %}
+                <tr data-id="{{ transport.id }}" class="{% if transport.category == '완료' %}table-primary{% else %}table-danger{% endif %}">
+                    <td data-field="category">{{ transport.category }}</td>
+                    <td data-field="date">{{ transport.date }}</td>
+                    <td data-field="order_company">{{ transport.order_company }}</td>
+                    <td data-field="withdrawal_date">{{ transport.withdrawal_date }}</td>
+                    <td data-field="withdrawal_bank">{{ transport.withdrawal_bank }}</td>
+                    <td data-field="vehicle_number">{{ transport.vehicle_number }}</td>
+                    <td data-field="driver_name">{{ transport.driver_name }}</td>
+                    <td data-field="driver_id_number">{{ transport.driver_id_number }}</td>
+                    <td data-field="driver_phone">{{ transport.driver_phone }}</td>
+                    <td data-field="driver_bank">{{ transport.driver_bank }}</td>
+                    <td data-field="driver_account_number">{{ transport.driver_account_number }}</td>
+                    <td data-field="delivery_fee">{{ transport.delivery_fee }}</td>
+                    <td data-field="withholding_tax">{{ transport.withholding_tax }}</td>
+                    <td data-field="deposit_amount">{{ transport.deposit_amount }}</td>
+                    <td data-field="note">{{ transport.note }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning edit-btn">수정</button>
+                        <button type="button" class="btn btn-sm btn-success save-btn" style="display:none;">저장</button>
+                        <button type="button" class="btn btn-sm btn-danger delete-btn">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Jeju Transport Modal -->
+    <div class="modal fade" id="addJejuTransportModal" tabindex="-1" aria-labelledby="addJejuTransportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addJejuTransportModalLabel">제주 탁송 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/transport/jeju/add" method="POST">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="addDate" class="form-label">날짜</label>
+                                <input type="date" class="form-control" id="addDate" name="date" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addOrderCompany" class="form-label">발주업체</label>
+                                <input type="text" class="form-control" id="addOrderCompany" name="order_company">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithdrawalDate" class="form-label">출금일</label>
+                                <input type="date" class="form-control" id="addWithdrawalDate" name="withdrawal_date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithdrawalBank" class="form-label">출금은행</label>
+                                <input type="text" class="form-control" id="addWithdrawalBank" name="withdrawal_bank">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addVehicleNumber" class="form-label">차량번호</label>
+                                <input type="text" class="form-control" id="addVehicleNumber" name="vehicle_number">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDriverName" class="form-label">기사명</label>
+                                <select class="form-select" id="addDriverName" name="driver_name">
+                                    <option value="">선택</option>
+                                    {% for driver in drivers %}
+                                    <option value="{{ driver.name }}">{{ driver.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDriverIdNumber" class="form-label">기사 주민등록번호</label>
+                                <input type="text" class="form-control" id="addDriverIdNumber" name="driver_id_number" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDriverPhone" class="form-label">기사 전화번호</label>
+                                <input type="text" class="form-control" id="addDriverPhone" name="driver_phone" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDriverBank" class="form-label">기사 은행</label>
+                                <input type="text" class="form-control" id="addDriverBank" name="driver_bank" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDriverAccountNumber" class="form-label">기사 계좌번호</label>
+                                <input type="text" class="form-control" id="addDriverAccountNumber" name="driver_account_number" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDeliveryFee" class="form-label">탁송료</label>
+                                <input type="number" step="0.01" class="form-control" id="addDeliveryFee" name="delivery_fee">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithholdingTax" class="form-label">원천징수 (3.3%)</label>
+                                <input type="number" step="0.01" class="form-control" id="addWithholdingTax" name="withholding_tax" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addDepositAmount" class="form-label">입금금액</label>
+                                <input type="number" step="0.01" class="form-control" id="addDepositAmount" name="deposit_amount" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addNote" class="form-label">비고</label>
+                                <textarea class="form-control" id="addNote" name="note"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Driver Modal -->
+    <div class="modal fade" id="addDriverModal" tabindex="-1" aria-labelledby="addDriverModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDriverModalLabel">기사 데이터 입력</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/transport/jeju/drivers/add" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="driverName" class="form-label">성명</label>
+                            <input type="text" class="form-control" id="driverName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="driverIdNumber" class="form-label">주민등록번호</label>
+                            <input type="text" class="form-control" id="driverIdNumber" name="id_number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="driverPhone" class="form-label">전화번호</label>
+                            <input type="text" class="form-control" id="driverPhone" name="phone_number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="driverBank" class="form-label">은행명</label>
+                            <input type="text" class="form-control" id="driverBank" name="bank_name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="driverAccountNumber" class="form-label">통장번호</label>
+                            <input type="text" class="form-control" id="driverAccountNumber" name="account_number">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Excel Modal -->
+    <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadExcelModalLabel">엑셀 파일 업로드</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/transport/jeju/upload_excel" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">엑셀 파일 선택</label>
+                            <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">업로드</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const now = new Date();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchYear').value = {{ search_year | default(now.getFullYear()) }};
+            document.getElementById('searchMonth').value = {{ search_month | default(now.getMonth() + 1) }};
+            document.getElementById('searchDriver').value = "{{ search_driver_name | default('') }}";
+
+            const jejuTransportTable = document.getElementById('jejuTransportTable');
+
+            // Search button click
+            document.getElementById('searchButton').addEventListener('click', function() {
+                const year = document.getElementById('searchYear').value;
+                const month = document.getElementById('searchMonth').value;
+                const driverName = document.getElementById('searchDriver').value;
+                window.location.href = `/transport/jeju?year=${year}&month=${month}&driver_name=${driverName}`;
+            });
+
+            // Save Data button click (placeholder for now)
+            document.getElementById('saveDataButton').addEventListener('click', function() {
+                alert('데이터 저장 기능은 아직 구현되지 않았습니다.');
+            });
+
+            // Auto-fill driver info based on selected driver name
+            const addDriverNameSelect = document.getElementById('addDriverName');
+            const addDriverIdNumberInput = document.getElementById('addDriverIdNumber');
+            const addDriverPhoneInput = document.getElementById('addDriverPhone');
+            const addDriverBankInput = document.getElementById('addDriverBank');
+            const addDriverAccountNumberInput = document.getElementById('addDriverAccountNumber');
+
+            const driversData = {
+                {% for driver in drivers %}
+                "{{ driver.name }}": {
+                    id_number: "{{ driver.id_number }}",
+                    phone_number: "{{ driver.phone_number }}",
+                    bank_name: "{{ driver.bank_name }}",
+                    account_number: "{{ driver.account_number }}"
+                },
+                {% endfor %}
+            };
+
+            addDriverNameSelect.addEventListener('change', function() {
+                const selectedDriver = this.value;
+                if (driversData[selectedDriver]) {
+                    addDriverIdNumberInput.value = driversData[selectedDriver].id_number;
+                    addDriverPhoneInput.value = driversData[selectedDriver].phone_number;
+                    addDriverBankInput.value = driversData[selectedDriver].bank_name;
+                    addDriverAccountNumberInput.value = driversData[selectedDriver].account_number;
+                } else {
+                    addDriverIdNumberInput.value = '';
+                    addDriverPhoneInput.value = '';
+                    addDriverBankInput.value = '';
+                    addDriverAccountNumberInput.value = '';
+                }
+            });
+
+            // Calculate withholding tax and deposit amount automatically
+            const addDeliveryFeeInput = document.getElementById('addDeliveryFee');
+            const addWithholdingTaxInput = document.getElementById('addWithholdingTax');
+            const addDepositAmountInput = document.getElementById('addDepositAmount');
+
+            function calculateAmounts() {
+                const deliveryFee = parseFloat(addDeliveryFeeInput.value) || 0;
+                const withholdingTax = deliveryFee * 0.033;
+                const depositAmount = deliveryFee - withholdingTax;
+                addWithholdingTaxInput.value = withholdingTax.toFixed(2);
+                addDepositAmountInput.value = depositAmount.toFixed(2);
+            }
+
+            addDeliveryFeeInput.addEventListener('input', calculateAmounts);
+
+            jejuTransportTable.addEventListener('click', function(event) {
+                const target = event.target;
+
+                // Edit button click
+                if (target.classList.contains('edit-btn')) {
+                    const row = target.closest('tr');
+                    row.classList.add('editing');
+                    target.style.display = 'none';
+                    row.querySelector('.save-btn').style.display = 'inline-block';
+
+                    const fields = [
+                        'date', 'order_company', 'withdrawal_date', 'withdrawal_bank',
+                        'vehicle_number', 'driver_name', 'driver_id_number', 'driver_phone',
+                        'driver_bank', 'driver_account_number', 'delivery_fee', 'withholding_tax',
+                        'deposit_amount', 'note'
+                    ];
+
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell && field !== 'category') { // category is derived, not directly editable
+                            let input;
+                            const currentValue = cell.textContent.trim();
+
+                            if (field.includes('date')) {
+                                input = document.createElement('input');
+                                input.type = 'date';
+                                input.value = currentValue;
+                            } else if (field === 'delivery_fee' || field === 'withholding_tax' || field === 'deposit_amount') {
+                                input = document.createElement('input');
+                                input.type = 'number';
+                                input.step = '0.01';
+                                input.value = currentValue;
+                                if (field === 'withholding_tax' || field === 'deposit_amount') {
+                                    input.readOnly = true; // These are calculated fields
+                                }
+                            } else if (field === 'note') {
+                                input = document.createElement('textarea');
+                                input.value = currentValue;
+                            } else if (field === 'driver_name') {
+                                input = document.createElement('select');
+                                input.classList.add('form-select', 'form-select-sm');
+                                input.innerHTML = `
+                                    <option value="">선택</option>
+                                    {% for driver in drivers %}
+                                    <option value="{{ driver.name }}">{{ driver.name }}</option>
+                                    {% endfor %}
+                                `;
+                                input.value = currentValue;
+                                input.addEventListener('change', function() {
+                                    const selectedDriver = this.value;
+                                    const driverRow = this.closest('tr');
+                                    if (driversData[selectedDriver]) {
+                                        driverRow.querySelector(`td[data-field="driver_id_number"]`).textContent = driversData[selectedDriver].id_number;
+                                        driverRow.querySelector(`td[data-field="driver_phone"]`).textContent = driversData[selectedDriver].phone_number;
+                                        driverRow.querySelector(`td[data-field="driver_bank"]`).textContent = driversData[selectedDriver].bank_name;
+                                        driverRow.querySelector(`td[data-field="driver_account_number"]`).textContent = driversData[selectedDriver].account_number;
+                                    } else {
+                                        driverRow.querySelector(`td[data-field="driver_id_number"]`).textContent = '';
+                                        driverRow.querySelector(`td[data-field="driver_phone"]`).textContent = '';
+                                        driverRow.querySelector(`td[data-field="driver_bank"]`).textContent = '';
+                                        driverRow.querySelector(`td[data-field="driver_account_number"]`).textContent = '';
+                                    }
+                                });
+                            } else {
+                                input = document.createElement('input');
+                                input.type = 'text';
+                                input.value = currentValue;
+                            }
+                            input.classList.add('form-control', 'form-control-sm');
+                            input.name = field; // Set name for form submission
+                            cell.innerHTML = '';
+                            cell.appendChild(input);
+                        }
+                    });
+
+                    // Re-calculate amounts on input change for editing row
+                    const editDeliveryFeeInput = row.querySelector(`td[data-field="delivery_fee"] input`);
+                    if (editDeliveryFeeInput) {
+                        editDeliveryFeeInput.addEventListener('input', function() {
+                            const deliveryFee = parseFloat(this.value) || 0;
+                            const withholdingTax = deliveryFee * 0.033;
+                            const depositAmount = deliveryFee - withholdingTax;
+                            row.querySelector(`td[data-field="withholding_tax"] input`).value = withholdingTax.toFixed(2);
+                            row.querySelector(`td[data-field="deposit_amount"] input`).value = depositAmount.toFixed(2);
+                        });
+                    }
+                }
+
+                // Save button click
+                if (target.classList.contains('save-btn')) {
+                    const row = target.closest('tr');
+                    const jejuId = row.dataset.id;
+                    const formData = new FormData();
+                    formData.append('id', jejuId);
+
+                    const fields = [
+                        'date', 'order_company', 'withdrawal_date', 'withdrawal_bank',
+                        'vehicle_number', 'driver_name', 'driver_id_number', 'driver_phone',
+                        'driver_bank', 'driver_account_number', 'delivery_fee', 'withholding_tax',
+                        'deposit_amount', 'note'
+                    ];
+
+                    let isValid = true;
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell && cell.querySelector('input, select, textarea')) {
+                            const input = cell.querySelector('input, select, textarea');
+                            formData.append(field, input.value);
+                        } else if (cell) {
+                            // For readonly fields like driver_id_number, driver_phone, etc. when not in edit mode
+                            formData.append(field, cell.textContent.trim());
+                        }
+                    });
+
+                    if (!isValid) return; // If any validation failed
+
+                    fetch('/transport/jeju/edit', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json()) // Assuming Flask returns JSON response
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload(); // Reload to reflect changes and exit edit mode
+                        } else {
+                            alert('저장 실패: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('오류 발생: ' + error);
+                    });
+                }
+
+                // Delete button click
+                if (target.classList.contains('delete-btn')) {
+                    const row = target.closest('tr');
+                    const jejuId = row.dataset.id;
+                    if (confirm('정말로 이 제주탁송 기록을 삭제하시겠습니까?')) {
+                        const formData = new FormData();
+                        formData.append('id', jejuId);
+
+                        fetch('/transport/jeju/delete', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                row.remove(); // Remove row from table
+                            } else {
+                                alert('삭제 실패: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('오류 발생: ' + error);
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

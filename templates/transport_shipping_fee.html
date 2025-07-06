@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선적료 관리</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">선적료 관리</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/transport">이전 페이지</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">선적료 관리</h1>
+        <hr>
+        <div class="mb-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label for="searchYear" class="form-label">년도</label>
+                    <input type="number" class="form-control" id="searchYear" value="{{ search_year }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="searchMonth" class="form-label">월</label>
+                    <input type="number" class="form-control" id="searchMonth" value="{{ search_month }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-primary w-100" id="searchButton">검색</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-success w-100" id="saveDataButton">저장</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-info w-100" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">엑셀파일 업로드</button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#addRecordModal">추가</button>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-bordered mt-4" id="shippingFeeTable">
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>날짜</th>
+                    <th>출금일</th>
+                    <th>출금은행</th>
+                    <th>출금액</th>
+                    <th>고객사</th>
+                    <th>차량번호</th>
+                    <th>청구금액</th>
+                    <th>이윤</th>
+                    <th>비고</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr data-id="{{ record.id }}" class="{% if record.category == '완료' %}table-primary{% else %}table-danger{% endif %}">
+                    <td data-field="category">{{ record.category }}</td>
+                    <td data-field="date">{{ record.date }}</td>
+                    <td data-field="withdrawal_date">{{ record.withdrawal_date }}</td>
+                    <td data-field="withdrawal_bank">{{ record.withdrawal_bank }}</td>
+                    <td data-field="withdrawal_amount">{{ record.withdrawal_amount }}</td>
+                    <td data-field="customer_company">{{ record.customer_company }}</td>
+                    <td data-field="vehicle_number">{{ record.vehicle_number }}</td>
+                    <td data-field="billing_amount">{{ record.billing_amount }}</td>
+                    <td data-field="profit">{{ record.profit }}</td>
+                    <td data-field="note">{{ record.note }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning edit-btn">수정</button>
+                        <button type="button" class="btn btn-sm btn-success save-btn" style="display:none;">저장</button>
+                        <button type="button" class="btn btn-sm btn-danger delete-btn">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Record Modal -->
+    <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addRecordModalLabel">선적료 기록 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/transport/shipping_fee/add" method="POST">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="addDate" class="form-label">날짜</label>
+                                <input type="date" class="form-control" id="addDate" name="date" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithdrawalDate" class="form-label">출금일</label>
+                                <input type="date" class="form-control" id="addWithdrawalDate" name="withdrawal_date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithdrawalBank" class="form-label">출금은행</label>
+                                <input type="text" class="form-control" id="addWithdrawalBank" name="withdrawal_bank">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addWithdrawalAmount" class="form-label">출금액</label>
+                                <input type="number" step="0.01" class="form-control" id="addWithdrawalAmount" name="withdrawal_amount">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addCustomerCompany" class="form-label">고객사</label>
+                                <input type="text" class="form-control" id="addCustomerCompany" name="customer_company">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addVehicleNumber" class="form-label">차량번호</label>
+                                <input type="text" class="form-control" id="addVehicleNumber" name="vehicle_number">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addBillingAmount" class="form-label">청구금액</label>
+                                <input type="number" step="0.01" class="form-control" id="addBillingAmount" name="billing_amount">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addProfit" class="form-label">이윤</label>
+                                <input type="number" step="0.01" class="form-control" id="addProfit" name="profit" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="addNote" class="form-label">비고</label>
+                                <textarea class="form-control" id="addNote" name="note"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Excel Modal -->
+    <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadExcelModalLabel">엑셀 파일 업로드</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/transport/shipping_fee/upload_excel" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">엑셀 파일 선택</label>
+                            <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" class="btn btn-primary">업로드</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const now = new Date();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchYear').value = {{ search_year | default(now.getFullYear()) }};
+            document.getElementById('searchMonth').value = {{ search_month | default(now.getMonth() + 1) }};
+
+            const shippingFeeTable = document.getElementById('shippingFeeTable');
+
+            // Search button click
+            document.getElementById('searchButton').addEventListener('click', function() {
+                const year = document.getElementById('searchYear').value;
+                const month = document.getElementById('searchMonth').value;
+                window.location.href = `/transport/shipping_fee?year=${year}&month=${month}`;
+            });
+
+            // Save Data button click (placeholder for now)
+            document.getElementById('saveDataButton').addEventListener('click', function() {
+                alert('데이터 저장 기능은 아직 구현되지 않았습니다.');
+            });
+
+            // Calculate profit automatically for add modal
+            const addBillingAmountInput = document.getElementById('addBillingAmount');
+            const addWithdrawalAmountInput = document.getElementById('addWithdrawalAmount');
+            const addProfitInput = document.getElementById('addProfit');
+
+            function calculateAddProfit() {
+                const billingAmount = parseFloat(addBillingAmountInput.value) || 0;
+                const withdrawalAmount = parseFloat(addWithdrawalAmountInput.value) || 0;
+                addProfitInput.value = (billingAmount - withdrawalAmount).toFixed(2);
+            }
+
+            addBillingAmountInput.addEventListener('input', calculateAddProfit);
+            addWithdrawalAmountInput.addEventListener('input', calculateAddProfit);
+
+            shippingFeeTable.addEventListener('click', function(event) {
+                const target = event.target;
+
+                // Edit button click
+                if (target.classList.contains('edit-btn')) {
+                    const row = target.closest('tr');
+                    row.classList.add('editing');
+                    target.style.display = 'none';
+                    row.querySelector('.save-btn').style.display = 'inline-block';
+
+                    const fields = [
+                        'date', 'withdrawal_date', 'withdrawal_bank', 'withdrawal_amount',
+                        'customer_company', 'vehicle_number', 'billing_amount', 'profit', 'note'
+                    ];
+
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell && field !== 'category') { // category is derived, not directly editable
+                            let input;
+                            const currentValue = cell.textContent.trim();
+
+                            if (field.includes('date')) {
+                                input = document.createElement('input');
+                                input.type = 'date';
+                                input.value = currentValue;
+                            } else if (field === 'billing_amount' || field === 'withdrawal_amount' || field === 'profit') {
+                                input = document.createElement('input');
+                                input.type = 'number';
+                                input.step = '0.01';
+                                input.value = currentValue;
+                                if (field === 'profit') {
+                                    input.readOnly = true; // This is a calculated field
+                                }
+                            } else if (field === 'note') {
+                                input = document.createElement('textarea');
+                                input.value = currentValue;
+                            } else {
+                                input = document.createElement('input');
+                                input.type = 'text';
+                                input.value = currentValue;
+                            }
+                            input.classList.add('form-control', 'form-control-sm');
+                            input.name = field; // Set name for form submission
+                            cell.innerHTML = '';
+                            cell.appendChild(input);
+                        }
+                    });
+
+                    // Re-calculate profit on input change for editing row
+                    const editBillingAmountInput = row.querySelector(`td[data-field="billing_amount"] input`);
+                    const editWithdrawalAmountInput = row.querySelector(`td[data-field="withdrawal_amount"] input`);
+                    const editProfitInput = row.querySelector(`td[data-field="profit"] input`);
+
+                    function calculateEditProfit() {
+                        const billingAmount = parseFloat(editBillingAmountInput.value) || 0;
+                        const withdrawalAmount = parseFloat(editWithdrawalAmountInput.value) || 0;
+                        editProfitInput.value = (billingAmount - withdrawalAmount).toFixed(2);
+                    }
+
+                    if (editBillingAmountInput) editBillingAmountInput.addEventListener('input', calculateEditProfit);
+                    if (editWithdrawalAmountInput) editWithdrawalAmountInput.addEventListener('input', calculateEditProfit);
+                }
+
+                // Save button click
+                if (target.classList.contains('save-btn')) {
+                    const row = target.closest('tr');
+                    const recordId = row.dataset.id;
+                    const formData = new FormData();
+                    formData.append('id', recordId);
+
+                    const fields = [
+                        'date', 'withdrawal_date', 'withdrawal_bank', 'withdrawal_amount',
+                        'customer_company', 'vehicle_number', 'billing_amount', 'profit', 'note'
+                    ];
+
+                    let isValid = true;
+                    fields.forEach(field => {
+                        const cell = row.querySelector(`td[data-field="${field}"]`);
+                        if (cell && cell.querySelector('input, textarea')) {
+                            const input = cell.querySelector('input, textarea');
+                            formData.append(field, input.value);
+                        } else if (cell) {
+                            formData.append(field, cell.textContent.trim());
+                        }
+                    });
+
+                    if (!isValid) return; // If any validation failed
+
+                    fetch('/transport/shipping_fee/edit', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json()) // Assuming Flask returns JSON response
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload(); // Reload to reflect changes and exit edit mode
+                        } else {
+                            alert('저장 실패: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('오류 발생: ' + error);
+                    });
+                }
+
+                // Delete button click
+                if (target.classList.contains('delete-btn')) {
+                    const row = target.closest('tr');
+                    const recordId = row.dataset.id;
+                    if (confirm('정말로 이 기록을 삭제하시겠습니까?')) {
+                        const formData = new FormData();
+                        formData.append('id', recordId);
+
+                        fetch('/transport/shipping_fee/delete', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                row.remove(); // Remove row from table
+                            } else {
+                                alert('삭제 실패: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('오류 발생: ' + error);
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
