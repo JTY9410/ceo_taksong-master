@@ -299,8 +299,13 @@ def sales_upload():
 
             try:
                 df = pd.read_excel(filepath)
+                
+                # Convert '탁송일' to datetime, coercing errors to NaT
+                df['탁송일'] = pd.to_datetime(df['탁송일'], errors='coerce')
+                # Convert NaT to empty string or a default date if needed, for now, let's convert to string
+                df['탁송일'] = df['탁송일'].dt.strftime('%Y-%m-%d').fillna('')
+
                 # Convert relevant columns to string to avoid mixed types issues
-                df['탁송일'] = df['탁송일'].astype(str)
                 df['고객사'] = df['고객사'].astype(str)
                 df['운송유형'] = df['운송유형'].astype(str)
                 df['계산정리열'] = df['계산정리열'].astype(str)
@@ -317,7 +322,7 @@ def sales_upload():
                 conn = get_db()
                 cursor = conn.cursor()
                 cursor.execute("SELECT account_id, category FROM customers")
-                customer_categories = {row['account_id']: row['category'] for row in cursor.fetchall()}
+                customer_categories = {str(row['account_id']): row['category'] for row in cursor.fetchall()} # Ensure account_id is string
                 conn.close()
 
                 sales_data_list = []
@@ -368,7 +373,7 @@ def sales_upload():
                     processed_row = {
                         'delivery_date': row.get('탁송일', ''),
                         'customer_company': row.get('고객사', ''),
-                        'company_name': row.get('상호', ''), # Assuming '상호' column exists or can be derived
+                        'company_name': customer_account_id, # Use customer_account_id as company_name
                         'vehicle_number': row.get('차량번호', ''),
                         'transport_type': transport_type,
                         'calculation_summary': calculation_summary,
@@ -400,6 +405,7 @@ def sales_upload():
                            now=datetime.now())
 
             except Exception as e:
+                print(f"Error processing Excel file: {e}") # Log the error to console
                 flash(f'엑셀 파일 처리 중 오류 발생: {e}', 'danger')
                 return redirect(url_for('sales_upload'))
 
@@ -431,12 +437,12 @@ def save_uploaded_data():
         # Save sales data
         for row_data in sales_data_list:
             cursor.execute("INSERT INTO sales_data (year, month, data_type, delivery_date, customer_company, company_name, vehicle_number, transport_type, calculation_summary, delivery_fee, fuel_misc_total, other_costs, sales_delivery_fee, sales, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                           (year, month, '매출', row_data['delivery_date'], row_data['customer_company'], row_data['company_name'], row_data['vehicle_number'], row_data['transport_type'], row_data['calculation_summary'], row_data['delivery_fee'], row_data['fuel_misc_total'], row_data['other_costs'], row_data['sales_delivery_fee'], row_data['sales'], row_data['note']))
+                           (year, month, '매출', row_data['delivery_date'], row_data['customer_company'], row_data['customer_company'], row_data['vehicle_number'], row_data['transport_type'], row_data['calculation_summary'], row_data['delivery_fee'], row_data['fuel_misc_total'], row_data['other_costs'], row_data['sales_delivery_fee'], row_data['sales'], row_data['note']))
         
         # Save cost data
         for row_data in cost_data_list:
             cursor.execute("INSERT INTO sales_data (year, month, data_type, delivery_date, customer_company, company_name, vehicle_number, transport_type, calculation_summary, delivery_fee, fuel_misc_total, other_costs, sales_delivery_fee, cost, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                           (year, month, '비용', row_data['delivery_date'], row_data['customer_company'], row_data['company_name'], row_data['vehicle_number'], row_data['transport_type'], row_data['calculation_summary'], row_data['delivery_fee'], row_data['fuel_misc_total'], row_data['other_costs'], row_data['sales_delivery_fee'], row_data['cost'], row_data['note']))
+                           (year, month, '비용', row_data['delivery_date'], row_data['customer_company'], row_data['customer_company'], row_data['vehicle_number'], row_data['transport_type'], row_data['calculation_summary'], row_data['delivery_fee'], row_data['fuel_misc_total'], row_data['other_costs'], row_data['sales_delivery_fee'], row_data['cost'], row_data['note']))
         
         conn.commit()
         flash('데이터가 성공적으로 저장되었습니다.', 'success')
