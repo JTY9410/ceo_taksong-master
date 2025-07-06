@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>사용자 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">사용자 관리</a>
+            <a class="navbar-brand" href="/dashboard">Taksong Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin">이전 페이지</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/logout">로그아웃</a>
                     </li>
@@ -22,211 +24,436 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-4">
-        <h1 class="mb-4">사용자 관리</h1>
-        <hr>
-        <div class="mb-3">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">추가</button>
-        </div>
-        <table class="table table-bordered" id="userTable">
-            <thead>
-                <tr>
-                    <th>순</th>
-                    <th>아이디</th>
-                    <th>패스워드</th>
-                    <th>사용자명</th>
-                    <th>권한</th>
-                    <th>비고</th>
-                    <th>작업</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr data-id="{{ user.id }}">
-                    <td>{{ loop.index }}</td>
-                    <td data-field="username">{{ user.username }}</td>
-                    <td data-field="password">********</td> {# Password should not be displayed #}
-                    <td data-field="name">{{ user.name }}</td>
-                    <td data-field="role">{{ user.role }}</td>
-                    <td data-field="note">{{ user.note }}</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-info edit-btn">수정</button>
-                        <button type="button" class="btn btn-sm btn-success save-btn" style="display:none;">저장</button>
-                        <button type="button" class="btn btn-sm btn-danger delete-btn">삭제</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 
-    <!-- Add User Modal -->
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addUserModalLabel">사용자 추가</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-house-door-fill"></i>
+                                대시보드
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">
+                                <i class="bi bi-person-gear"></i>
+                                관리자
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/sales">
+                                <i class="bi bi-currency-dollar"></i>
+                                매출정산
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/transport">
+                                <i class="bi bi-truck"></i>
+                                탁송업무
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                <form action="/admin/users/add" method="POST">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="addUsername" class="form-label">아이디</label>
-                            <input type="text" class="form-control" id="addUsername" name="username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="addPassword" class="form-label">패스워드</label>
-                            <input type="password" class="form-control" id="addPassword" name="password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="addName" class="form-label">사용자명</label>
-                            <input type="text" class="form-control" id="addName" name="name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="addRole" class="form-label">권한</label>
-                            <select class="form-select" id="addRole" name="role" required>
-                                <option value="관리자">관리자</option>
-                                <option value="일반사용자">일반사용자</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="addNote" class="form-label">비고</label>
-                            <input type="text" class="form-control" id="addNote" name="note">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                        <button type="submit" class="btn btn-primary">추가</button>
-                    </div>
-                </form>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">사용자 관리</h1>
+                </div>
+                <hr>
+                <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">Taksong Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-house-door-fill"></i>
+                                대시보드
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/admin">
+                                <i class="bi bi-person-gear"></i>
+                                관리자
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/sales">
+                                <i class="bi bi-currency-dollar"></i>
+                                매출정산
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/transport">
+                                <i class="bi bi-truck"></i>
+                                탁송업무
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">사용자 관리</h1>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">추가</button>
+                </div>
+                <table class="table table-bordered" id="userTable">
+                    <thead>
+                        <tr>
+                            <th>순</th>
+                            <th>아이디</th>
+                            <th>패스워드</th>
+                            <th>사용자명</th>
+                            <th>권한</th>
+                            <th>비고</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr data-id="{{ user.id }}">
+                            <td>{{ loop.index }}</td>
+                            <td data-field="username">{{ user.username }}</td>
+                            <td data-field="password">********</td> {# Password should not be displayed #}
+                            <td data-field="name">{{ user.name }}</td>
+                            <td data-field="role">{{ user.role }}</td>
+                            <td data-field="note">{{ user.note }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-info edit-btn">수정</button>
+                                <button type="button" class="btn btn-sm btn-success save-btn" style="display:none;">저장</button>
+                                <button type="button" class="btn btn-sm btn-danger delete-btn">삭제</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Add User Modal -->
+                <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addUserModalLabel">사용자 추가</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form action="/admin/users/add" method="POST">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="addUsername" class="form-label">아이디</label>
+                                        <input type="text" class="form-control" id="addUsername" name="username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addPassword" class="form-label">패스워드</label>
+                                        <input type="password" class="form-control" id="addPassword" name="password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addName" class="form-label">사용자명</label>
+                                        <input type="text" class="form-control" id="addName" name="name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addRole" class="form-label">권한</label>
+                                        <select class="form-select" id="addRole" name="role" required>
+                                            <option value="관리자">관리자</option>
+                                            <option value="일반사용자">일반사용자</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addNote" class="form-label">비고</label>
+                                        <input type="text" class="form-control" id="addNote" name="note">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                                    <button type="submit" class="btn btn-primary">추가</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const userTable = document.getElementById('userTable');
+
+                        userTable.addEventListener('click', function(event) {
+                            const target = event.target;
+
+                            // Edit button click
+                            if (target.classList.contains('edit-btn')) {
+                                const row = target.closest('tr');
+                                row.classList.add('editing');
+                                target.style.display = 'none';
+                                row.querySelector('.save-btn').style.display = 'inline-block';
+
+                                const fields = ['username', 'name', 'role', 'note'];
+                                fields.forEach(field => {
+                                    const cell = row.querySelector(`td[data-field="${field}"]`);
+                                    if (cell) {
+                                        let input;
+                                        if (field === 'role') {
+                                            input = document.createElement('select');
+                                            input.classList.add('form-select', 'form-select-sm');
+                                            input.innerHTML = `
+                                                <option value="관리자">관리자</option>
+                                                <option value="일반사용자">일반사용자</option>
+                                            `;
+                                            input.value = cell.textContent.trim();
+                                        } else if (field === 'password') {
+                                            // Password field is special, don't show current value
+                                            input = document.createElement('input');
+                                            input.type = 'password';
+                                            input.placeholder = '새 비밀번호 (변경 시 입력)';
+                                            input.classList.add('form-control', 'form-control-sm');
+                                        } else {
+                                            input = document.createElement('input');
+                                            input.type = 'text';
+                                            input.value = cell.textContent.trim();
+                                            input.classList.add('form-control', 'form-control-sm');
+                                        }
+                                        input.name = field;
+                                        cell.innerHTML = '';
+                                        cell.appendChild(input);
+                                    }
+                                });
+                            }
+
+                            // Save button click
+                            if (target.classList.contains('save-btn')) {
+                                const row = target.closest('tr');
+                                const userId = row.dataset.id;
+                                const formData = new FormData();
+                                formData.append('id', userId);
+
+                                const fields = ['username', 'password', 'name', 'role', 'note'];
+                                let isValid = true;
+                                fields.forEach(field => {
+                                    const cell = row.querySelector(`td[data-field="${field}"]`);
+                                    if (cell && cell.querySelector('input, select')) {
+                                        const input = cell.querySelector('input, select');
+                                        if (field === 'username' && !input.value.trim()) {
+                                            alert('아이디는 필수 입력 항목입니다.');
+                                            isValid = false;
+                                            return;
+                                        }
+                                        if (field === 'name' && !input.value.trim()) {
+                                            alert('사용자명은 필수 입력 항목입니다.');
+                                            isValid = false;
+                                            return;
+                                        }
+                                        formData.append(field, input.value);
+                                    }
+                                });
+
+                                if (!isValid) return;
+
+                                fetch('/admin/users/edit', {
+                                    method: 'POST',
+                                    body: formData
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert(data.message);
+                                        location.reload(); // Reload to reflect changes and exit edit mode
+                                    } else {
+                                        alert('저장 실패: ' + data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('오류 발생: ' + error);
+                                });
+                            }
+
+                            // Delete button click
+                            if (target.classList.contains('delete-btn')) {
+                                const row = target.closest('tr');
+                                const userId = row.dataset.id;
+                                if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
+                                    const formData = new FormData();
+                                    formData.append('id', userId);
+
+                                    fetch('/admin/users/delete', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert(data.message);
+                                            row.remove(); // Remove row from table
+                                        } else {
+                                            alert('삭제 실패: ' + data.message);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        alert('오류 발생: ' + error);
+                                    });
+                                }
+                            }
+                        });
+                    });
+                </script>
+            </main>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userTable = document.getElementById('userTable');
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const userTable = document.getElementById('userTable');
 
-            userTable.addEventListener('click', function(event) {
-                const target = event.target;
+                        userTable.addEventListener('click', function(event) {
+                            const target = event.target;
 
-                // Edit button click
-                if (target.classList.contains('edit-btn')) {
-                    const row = target.closest('tr');
-                    row.classList.add('editing');
-                    target.style.display = 'none';
-                    row.querySelector('.save-btn').style.display = 'inline-block';
+                            // Edit button click
+                            if (target.classList.contains('edit-btn')) {
+                                const row = target.closest('tr');
+                                row.classList.add('editing');
+                                target.style.display = 'none';
+                                row.querySelector('.save-btn').style.display = 'inline-block';
 
-                    const fields = ['username', 'name', 'role', 'note'];
-                    fields.forEach(field => {
-                        const cell = row.querySelector(`td[data-field="${field}"]`);
-                        if (cell) {
-                            let input;
-                            if (field === 'role') {
-                                input = document.createElement('select');
-                                input.classList.add('form-select', 'form-select-sm');
-                                input.innerHTML = `
-                                    <option value="관리자">관리자</option>
-                                    <option value="일반사용자">일반사용자</option>
-                                `;
-                                input.value = cell.textContent.trim();
-                            } else if (field === 'password') {
-                                // Password field is special, don't show current value
-                                input = document.createElement('input');
-                                input.type = 'password';
-                                input.placeholder = '새 비밀번호 (변경 시 입력)';
-                                input.classList.add('form-control', 'form-control-sm');
-                            } else {
-                                input = document.createElement('input');
-                                input.type = 'text';
-                                input.value = cell.textContent.trim();
-                                input.classList.add('form-control', 'form-control-sm');
+                                const fields = ['username', 'name', 'role', 'note'];
+                                fields.forEach(field => {
+                                    const cell = row.querySelector(`td[data-field="${field}"]`);
+                                    if (cell) {
+                                        let input;
+                                        if (field === 'role') {
+                                            input = document.createElement('select');
+                                            input.classList.add('form-select', 'form-select-sm');
+                                            input.innerHTML = `
+                                                <option value="관리자">관리자</option>
+                                                <option value="일반사용자">일반사용자</option>
+                                            `;
+                                            input.value = cell.textContent.trim();
+                                        } else if (field === 'password') {
+                                            // Password field is special, don't show current value
+                                            input = document.createElement('input');
+                                            input.type = 'password';
+                                            input.placeholder = '새 비밀번호 (변경 시 입력)';
+                                            input.classList.add('form-control', 'form-control-sm');
+                                        } else {
+                                            input = document.createElement('input');
+                                            input.type = 'text';
+                                            input.value = cell.textContent.trim();
+                                            input.classList.add('form-control', 'form-control-sm');
+                                        }
+                                        input.name = field;
+                                        cell.innerHTML = '';
+                                        cell.appendChild(input);
+                                    }
+                                });
                             }
-                            input.name = field;
-                            cell.innerHTML = '';
-                            cell.appendChild(input);
-                        }
-                    });
-                }
 
-                // Save button click
-                if (target.classList.contains('save-btn')) {
-                    const row = target.closest('tr');
-                    const userId = row.dataset.id;
-                    const formData = new FormData();
-                    formData.append('id', userId);
+                            // Save button click
+                            if (target.classList.contains('save-btn')) {
+                                const row = target.closest('tr');
+                                const userId = row.dataset.id;
+                                const formData = new FormData();
+                                formData.append('id', userId);
 
-                    const fields = ['username', 'password', 'name', 'role', 'note'];
-                    let isValid = true;
-                    fields.forEach(field => {
-                        const cell = row.querySelector(`td[data-field="${field}"]`);
-                        if (cell && cell.querySelector('input, select')) {
-                            const input = cell.querySelector('input, select');
-                            if (field === 'username' && !input.value.trim()) {
-                                alert('아이디는 필수 입력 항목입니다.');
-                                isValid = false;
-                                return;
+                                const fields = ['username', 'password', 'name', 'role', 'note'];
+                                let isValid = true;
+                                fields.forEach(field => {
+                                    const cell = row.querySelector(`td[data-field="${field}"]`);
+                                    if (cell && cell.querySelector('input, select')) {
+                                        const input = cell.querySelector('input, select');
+                                        if (field === 'username' && !input.value.trim()) {
+                                            alert('아이디는 필수 입력 항목입니다.');
+                                            isValid = false;
+                                            return;
+                                        }
+                                        if (field === 'name' && !input.value.trim()) {
+                                            alert('사용자명은 필수 입력 항목입니다.');
+                                            isValid = false;
+                                            return;
+                                        }
+                                        formData.append(field, input.value);
+                                    }
+                                });
+
+                                if (!isValid) return;
+
+                                fetch('/admin/users/edit', {
+                                    method: 'POST',
+                                    body: formData
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert(data.message);
+                                        location.reload(); // Reload to reflect changes and exit edit mode
+                                    } else {
+                                        alert('저장 실패: ' + data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('오류 발생: ' + error);
+                                });
                             }
-                            if (field === 'name' && !input.value.trim()) {
-                                alert('사용자명은 필수 입력 항목입니다.');
-                                isValid = false;
-                                return;
+
+                            // Delete button click
+                            if (target.classList.contains('delete-btn')) {
+                                const row = target.closest('tr');
+                                const userId = row.dataset.id;
+                                if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
+                                    const formData = new FormData();
+                                    formData.append('id', userId);
+
+                                    fetch('/admin/users/delete', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert(data.message);
+                                            row.remove(); // Remove row from table
+                                        } else {
+                                            alert('삭제 실패: ' + data.message);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        alert('오류 발생: ' + error);
+                                    });
+                                }
                             }
-                            formData.append(field, input.value);
-                        }
-                    });
-
-                    if (!isValid) return;
-
-                    fetch('/admin/users/edit', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert(data.message);
-                            location.reload(); // Reload to reflect changes and exit edit mode
-                        } else {
-                            alert('저장 실패: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('오류 발생: ' + error);
-                    });
-                }
-
-                // Delete button click
-                if (target.classList.contains('delete-btn')) {
-                    const row = target.closest('tr');
-                    const userId = row.dataset.id;
-                    if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
-                        const formData = new FormData();
-                        formData.append('id', userId);
-
-                        fetch('/admin/users/delete', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                alert(data.message);
-                                row.remove(); // Remove row from table
-                            } else {
-                                alert('삭제 실패: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('오류 발생: ' + error);
                         });
-                    }
-                }
-            });
-        });
-    </script>
-</body>
+                    });
+                </script>
+            </main>
+        </div>
+    </div>
 </html>

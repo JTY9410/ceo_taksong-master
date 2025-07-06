@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-1.0">
     <title>고객사 분석</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">고객사 분석</a>
+            <a class="navbar-brand" href="/dashboard">Taksong Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/sales">메인1 페이지</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/logout">로그아웃</a>
                     </li>
@@ -22,61 +24,101 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-4">
-        <h1 class="mb-4">고객사 분석</h1>
-        <hr>
-        <div class="row mb-3 align-items-end">
-            <div class="col-md-3">
-                <label for="startDate" class="form-label">시작일</label>
-                <input type="date" class="form-control" id="startDate" name="start_date">
-            </div>
-            <div class="col-md-3">
-                <label for="endDate" class="form-label">종료일</label>
-                <input type="date" class="form-control" id="endDate" name="end_date">
-            </div>
-            <div class="col-md-3">
-                <label for="customerSelect" class="form-label">고객사</label>
-                <select class="form-select" id="customerSelect" name="customer_id">
-                    <option value="">전체 고객사</option>
-                    {% for customer in customers %}
-                    <option value="{{ customer.account_id }}">{{ customer.company_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button type="button" class="btn btn-primary w-100" id="searchCustomerButton">검색</button>
-            </div>
-        </div>
 
-        <div id="customerAnalysisResults" style="display:none;">
-            <h2 class="mt-5">{{ analysis_year }}년 {{ analysis_month }}월 고객사별 매출분석</h2>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>상호</th>
-                        <th>유형구분</th>
-                        <th>건수</th>
-                        <th>금액</th>
-                        <th>세부내용</th>
-                        <th>출력</th>
-                        <th>비고</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in customer_analysis %}
-                    <tr>
-                        <td>{{ row.company_name }}</td>
-                        <td>{{ row.transport_type }}</td>
-                        <td>{{ row.count }}</td>
-                        <td>{{ row.amount }}</td>
-                        <td><button type="button" class="btn btn-sm btn-info detail-btn" data-customer-id="{{ row.customer_id }}" data-start-date="{{ start_date }}" data-end-date="{{ end_date }}">확인</button></td>
-                        <td><button type="button" class="btn btn-sm btn-secondary print-btn">출력</button></td>
-                        <td>{{ row.note }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <button type="button" class="btn btn-success mt-3" id="saveAnalysisButton">저장</button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-house-door-fill"></i>
+                                대시보드
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">
+                                <i class="bi bi-person-gear"></i>
+                                관리자
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/sales">
+                                <i class="bi bi-currency-dollar"></i>
+                                매출정산
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/transport">
+                                <i class="bi bi-truck"></i>
+                                탁송업무
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">고객사 분석</h1>
+                </div>
+                <hr>
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="startDate" class="form-label">시작일</label>
+                        <input type="date" class="form-control" id="startDate" name="start_date">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="endDate" class="form-label">종료일</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="customerSelect" class="form-label">고객사</label>
+                        <select class="form-select" id="customerSelect" name="customer_id">
+                            <option value="">전체 고객사</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.account_id }}">{{ customer.company_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-primary w-100" id="searchCustomerButton">검색</button>
+                    </div>
+                </div>
+
+                <div id="customerAnalysisResults" style="display:none;">
+                    <h2 class="mt-5">{{ analysis_year }}년 {{ analysis_month }}월 고객사별 매출분석</h2>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>상호</th>
+                                <th>유형구분</th>
+                                <th>건수</th>
+                                <th>금액</th>
+                                <th>세부내용</th>
+                                <th>출력</th>
+                                <th>비고</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in customer_analysis %}
+                            <tr>
+                                <td>{{ row.company_name }}</td>
+                                <td>{{ row.transport_type }}</td>
+                                <td>{{ row.count }}</td>
+                                <td>{{ row.amount }}</td>
+                                <td><button type="button" class="btn btn-sm btn-info detail-btn" data-customer-id="{{ row.customer_id }}" data-start-date="{{ start_date }}" data-end-date="{{ end_date }}">확인</button></td>
+                                <td><button type="button" class="btn btn-sm btn-secondary print-btn">출력</button></td>
+                                <td>{{ row.note }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success mt-3" id="saveAnalysisButton">저장</button>
+                </div>
+            </main>
         </div>
     </div>
 

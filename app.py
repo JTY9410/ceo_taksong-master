@@ -65,7 +65,7 @@ def admin():
     if not session.get('logged_in') or session.get('role') != '관리자':
         flash('관리자 권한이 필요합니다.', 'danger')
         return redirect(url_for('dashboard'))
-    return render_template('admin.html')
+    return render_template('admin.html', now=datetime.now())
 
 @app.route('/admin/users')
 def admin_users():
@@ -393,10 +393,11 @@ def sales_upload():
 
                 flash('엑셀 파일이 성공적으로 업로드 및 처리되었습니다. 데이터를 확인 후 저장해주세요.', 'success')
                 return render_template('sales_upload.html',
-                                       sales_data=sales_data_list,
-                                       cost_data=cost_data_list,
-                                       year=year,
-                                       month=month)
+                           sales_data=sales_data_list,
+                           cost_data=cost_data_list,
+                           year=year,
+                           month=month,
+                           now=datetime.now())
 
             except Exception as e:
                 flash(f'엑셀 파일 처리 중 오류 발생: {e}', 'danger')
@@ -407,7 +408,8 @@ def sales_upload():
                            sales_data=session.pop('uploaded_sales_data', []),
                            cost_data=session.pop('uploaded_cost_data', []),
                            year=session.pop('uploaded_year', datetime.now().year),
-                           month=session.pop('uploaded_month', datetime.now().month))
+                           month=session.pop('uploaded_month', datetime.now().month),
+                           now=datetime.now())
 
 @app.route('/sales/save_uploaded_data', methods=['POST'])
 def save_uploaded_data():
@@ -1325,7 +1327,7 @@ def save_jeju_data():
 def transport_selfcar_wrecker():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return render_template('transport_selfcar_wrecker.html')
+    return render_template('transport_selfcar_wrecker.html', now=datetime.now())
 
 
 
