@@ -321,8 +321,8 @@ def sales_upload():
                 # Fetch customer categories for sales/cost distinction
                 conn = get_db()
                 cursor = conn.cursor()
-                cursor.execute("SELECT account_id, category FROM customers")
-                customer_categories = {str(row['account_id']): row['category'] for row in cursor.fetchall()} # Ensure account_id is string
+                cursor.execute("SELECT account_id, company_name, category FROM customers")
+                customer_info = {str(row['account_id']): {'company_name': row['company_name'], 'category': row['category']} for row in cursor.fetchall()}
                 conn.close()
 
                 sales_data_list = []
@@ -330,7 +330,8 @@ def sales_upload():
 
                 for index, row in df.iterrows():
                     customer_account_id = str(row['고객사'])
-                    data_category = customer_categories.get(customer_account_id, '미지정') # Default to '미지정' if not found
+                    customer_name = customer_info.get(customer_account_id, {}).get('company_name', '미지정')
+                    data_category = customer_info.get(customer_account_id, {}).get('category', '미지정')
 
                     # Initialize sales and cost for current row
                     sales_value = 0
@@ -372,8 +373,8 @@ def sales_upload():
 
                     processed_row = {
                         'delivery_date': row.get('탁송일', ''),
-                        'customer_company': row.get('고객사', ''),
-                        'company_name': customer_account_id, # Use customer_account_id as company_name
+                        'customer_company': customer_account_id,
+                        'company_name': customer_name,
                         'vehicle_number': row.get('차량번호', ''),
                         'transport_type': transport_type,
                         'calculation_summary': calculation_summary,
@@ -1333,7 +1334,139 @@ def save_jeju_data():
 def transport_selfcar_wrecker():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return render_template('transport_selfcar_wrecker.html', now=datetime.now())
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    year = request.args.get('year', type=int, default=datetime.now().year)
+    month = request.args.get('month', type=int, default=datetime.now().month)
+
+    query = "SELECT * FROM self_car_wrecker WHERE 1=1"
+    params = []
+
+    if year and month:
+        query += " AND strftime('%Y', date) = ? AND strftime('%m', date) = ?"
+        params.append(str(year))
+        params.append(f'{month:02d}')
+
+    cursor.execute(query, params)
+    records = cursor.fetchall()
+    conn.close()
+
+    return render_template('transport_selfcar_wrecker.html',
+                           records=records,
+                           search_year=year,
+                           search_month=month,
+                           now=datetime.now())
+
+@app.route('/transport/selfcar_wrecker/add', methods=['POST'])
+def add_self_car_wrecker():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Determine category based on withdrawal_date
+        withdrawal_date = request.form.get('withdrawal_date')
+        category = '완료' if withdrawal_date else '미완료'
+
+        # Calculate actual_payment
+        billing_amount = request.form.get('billing_amount', type=float, default=0)
+        profit = request.form.get('profit', type=float, default=0)
+        actual_payment = billing_amount - profit
+
+        cursor.execute("INSERT INTO self_car_wrecker (category, date, withdrawal_bank, withdrawal_date, customer_name, vehicle_number, driver, phone_number, billing_amount, profit, actual_payment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (category,
+                        request.form.get('date'),
+                        request.form.get('withdrawal_bank'),
+                        withdrawal_date,
+                        request.form.get('customer_name'),
+                        request.form.get('vehicle_number'),
+                        request.form.get('driver'),
+                        request.form.get('phone_number'),
+                        billing_amount,
+                        profit,
+                        actual_payment))
+        conn.commit()
+        flash('셀프카 및 렉카 기록이 성공적으로 추가되었습니다.', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'셀프카 및 렉카 기록 추가 중 오류 발생: {e}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('transport_selfcar_wrecker'))
+
+@app.route('/transport/selfcar_wrecker/edit', methods=['POST'])
+def edit_self_car_wrecker():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        record_id = request.form.get('id', type=int)
+        withdrawal_date = request.form.get('withdrawal_date')
+        category = '완료' if withdrawal_date else '미완료'
+
+        billing_amount = request.form.get('billing_amount', type=float, default=0)
+        profit = request.form.get('profit', type=float, default=0)
+        actual_payment = billing_amount - profit
+
+        cursor.execute("UPDATE self_car_wrecker SET category = ?, date = ?, withdrawal_bank = ?, withdrawal_date = ?, customer_name = ?, vehicle_number = ?, driver = ?, phone_number = ?, billing_amount = ?, profit = ?, actual_payment = ? WHERE id = ?",
+                       (category,
+                        request.form.get('date'),
+                        request.form.get('withdrawal_bank'),
+                        withdrawal_date,
+                        request.form.get('customer_name'),
+                        request.form.get('vehicle_number'),
+                        request.form.get('driver'),
+                        request.form.get('phone_number'),
+                        billing_amount,
+                        profit,
+                        actual_payment,
+                        record_id))
+        conn.commit()
+        flash('셀프카 및 렉카 기록이 성공적으로 수정되었습니다.', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'셀프카 및 렉카 기록 수정 중 오류 발생: {e}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('transport_selfcar_wrecker'))
+
+@app.route('/transport/selfcar_wrecker/delete', methods=['POST'])
+def delete_self_car_wrecker():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        record_id = request.form.get('id', type=int)
+        cursor.execute("DELETE FROM self_car_wrecker WHERE id = ?", (record_id,))
+        conn.commit()
+        flash('셀프카 및 렉카 기록이 성공적으로 삭제되었습니다.', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'셀프카 및 렉카 기록 삭제 중 오류 발생: {e}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('transport_selfcar_wrecker'))
+
+@app.route('/transport/selfcar_wrecker/upload_excel', methods=['POST'])
+def upload_self_car_wrecker_excel():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    flash('셀프카 및 렉카 엑셀 업로드 기능은 아직 구현되지 않았습니다.', 'info')
+    return redirect(url_for('transport_selfcar_wrecker'))
+
+@app.route('/transport/selfcar_wrecker/save_data', methods=['POST'])
+def save_self_car_wrecker_data():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    flash('셀프카 및 렉카 데이터 저장 기능은 아직 구현되지 않았습니다.', 'info')
+    return redirect(url_for('transport_selfcar_wrecker'))
 
 
 
