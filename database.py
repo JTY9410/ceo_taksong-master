@@ -202,6 +202,19 @@ def init_db():
     """)
 
     conn.commit()
+    
+    # Add initial admin user
+    try:
+        from werkzeug.security import generate_password_hash
+        # The requirement states '탁송' and 'wecar'
+        hashed_password = generate_password_hash('wecar')
+        cursor.execute("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)",
+                       ('탁송', hashed_password, '관리자', '관리자'))
+        conn.commit()
+        print("Initial admin user '탁송' created.")
+    except sqlite3.IntegrityError:
+        print("Admin user '탁송' already exists.")
+    
     conn.close()
 
 def get_db():
@@ -244,17 +257,3 @@ def reset_customer_data():
 if __name__ == '__main__':
     init_db()
     print("Database initialized and tables created.")
-    # Add initial admin user
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        from werkzeug.security import generate_password_hash
-        # The requirement states '탁송' and 'wecar'
-        hashed_password = generate_password_hash('wecar')
-        cursor.execute("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)",
-                       ('탁송', hashed_password, '관리자', '관리자'))
-        conn.commit()
-        print("Initial admin user '탁송' created.")
-    except sqlite3.IntegrityError:
-        print("Admin user '탁송' already exists.")
-    conn.close()
