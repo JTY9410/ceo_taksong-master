@@ -213,7 +213,11 @@ def init_db():
         conn.commit()
         print("Initial admin user '탁송' created.")
     except sqlite3.IntegrityError:
-        print("Admin user '탁송' already exists.")
+        print("Admin user '탁송' already exists. Updating password.")
+        from werkzeug.security import generate_password_hash
+        hashed_password = generate_password_hash('wecar')
+        cursor.execute("UPDATE users SET password = ? WHERE username = ?", (hashed_password, '탁송'))
+        conn.commit()
     
     conn.close()
 
